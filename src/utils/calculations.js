@@ -1,10 +1,7 @@
-// calculations.js
 import _ from 'lodash';
 
 /**
  * Berechnet den Zinsplan für die gegebenen Parameter
- * @param {Object} state - Der aktuelle State des Zinskalkulators
- * @returns {Object} - Die berechneten Ergebnisse
  */
 export const calculateZinsplan = (state) => {
   // Berechnung für jede Tranche
@@ -154,4 +151,60 @@ function berechneTranchenzahlplan(
   if (vermittlungEndfaellig || strukturierungEndfaellig) {
     const letzterEintrag = {
       zeitpunkt: laufzeitMonate,
-      vermittlungsGebuehr: vermittlungEndfaellig ? vermittlungsGebuehrB
+      vermittlungsGebuehr: vermittlungEndfaellig ? vermittlungsGebuehrBetrag : 0,
+      vermittlungsGebuehrMwSt: vermittlungEndfaellig ? vermittlungsGebuehrBetrag * 0.19 : 0,
+      strukturierungsGebuehr: strukturierungEndfaellig ? strukturierungsGebuehrBetrag : 0,
+      strukturierungsGebuehrMwSt: strukturierungEndfaellig ? strukturierungsGebuehrBetrag * 0.19 : 0,
+      crowdZins: 0,
+      serviceGebuehr: 0,
+      serviceGebuehrMwSt: 0
+    };
+    
+    // Prüfen, ob bereits ein Eintrag für diesen Zeitpunkt existiert
+    const existingEntryIndex = zahlplan.findIndex(entry => entry.zeitpunkt === laufzeitMonate);
+    if (existingEntryIndex !== -1) {
+      // Bestehenden Eintrag aktualisieren
+      zahlplan[existingEntryIndex] = {
+        ...zahlplan[existingEntryIndex],
+        vermittlungsGebuehr: letzterEintrag.vermittlungsGebuehr,
+        vermittlungsGebuehrMwSt: letzterEintrag.vermittlungsGebuehrMwSt,
+        strukturierungsGebuehr: letzterEintrag.strukturierungsGebuehr,
+        strukturierungsGebuehrMwSt: letzterEintrag.strukturierungsGebuehrMwSt
+      };
+    } else {
+      // Neuen Eintrag hinzufügen
+      zahlplan.push(letzterEintrag);
+    }
+  }
+  
+  // Sortieren nach Zeitpunkt
+  return zahlplan.sort((a, b) => a.zeitpunkt - b.zeitpunkt);
+}
+
+/**
+ * Berechnet den kombinierten Zahlplan über alle Tranchen
+ */
+function berechnekombiniertenZahlplan(tranchen) {
+  const kombinierterZahlplan = [];
+  
+  tranchen.forEach(tranche => {
+    tranche.zahlplan.forEach(zahlung => {
+      const existingZahlung = kombinierterZahlplan.find(z => z.zeitpunkt === zahlung.zeitpunkt);
+      if (existingZahlung) {
+        // Bestehende Zahlung aktualisieren
+        existingZahlung.vermittlungsGebuehr += zahlung.vermittlungsGebuehr;
+        existingZahlung.vermittlungsGebuehrMwSt += zahlung.vermittlungsGebuehrMwSt;
+        existingZahlung.strukturierungsGebuehr += zahlung.strukturierungsGebuehr;
+        existingZahlung.strukturierungsGebuehrMwSt += zahlung.strukturierungsGebuehrMwSt;
+        existingZahlung.crowdZins += zahlung.crowdZins;
+        existingZahlung.serviceGebuehr += zahlung.serviceGebuehr;
+        existingZahlung.serviceGebuehrMwSt += zahlung.serviceGebuehrMwSt;
+      } else {
+        // Neue Zahlung hinzufügen
+        kombinierterZahlplan.push({...zahlung});
+      }
+    });
+  });
+  
+  return kombinierterZahlplan.sort((a, b) => a.zeitpunkt - b.zeitpunkt);
+}
