@@ -473,64 +473,72 @@
                 });
                 
                 // HTML für diese Tranche erstellen
-                const trancheHTML = `
-                    <div class="results">
-                        <h2>Tranche ${index + 1} - Laufzeit: ${laufzeitMonate} Monate (${laufzeitJahre.toFixed(1)} Jahre)</h2>
-                        
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Komponente</th>
-                                    <th>Per Annum</th>
-                                    <th>Gesamt (Netto)</th>
-                                    <th>Gesamt (Brutto)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="font-medium">Gesamtfinanzierung</td>
-                                    <td>-</td>
-                                    <td>${formatCurrency(gesamtFinanzierung)}</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>All-in Mezzanine Zins (${formatPercent(allInMezzanineZins)})</td>
-                                    <td>${formatCurrency(allInMezzanineZinsenJahr)}</td>
-                                    <td>${formatCurrency(allInMezzanineZinsenJahr * laufzeitJahre)}</td>
-                                    <td>-</td>
-                                </tr>
-                                <tr>
-                                    <td>Crowd Zins (${formatPercent(crowdZins)})</td>
-                                    <td>${formatCurrency(crowdZinsenJahr)}</td>
-                                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
-                                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
-                                </tr>
-                                <tr>
-                                    <td>Vermittlungsgebühr (${formatPercent(vermittlungsGebuehr)})</td>
-                                    <td>${formatCurrency(vermittlungsGebuehrBetrag / laufzeitJahre)}</td>
-                                    <td>${formatCurrency(gesamtVermittlungsGebuehr)}</td>
-                                    <td>${formatCurrency(gesamtVermittlungsGebuehr + gesamtVermittlungsGebuehrMwSt)}</td>
-                                </tr>
-                                <tr>
-                                    <td>Strukturierungsgebühr</td>
-                                    <td>${formatCurrency(strukturierungsGebuehrBetrag / laufzeitJahre)}</td>
-                                    <td>${formatCurrency(gesamtStrukturierungsGebuehr)}</td>
-                                    <td>${formatCurrency(gesamtStrukturierungsGebuehr + gesamtStrukturierungsGebuehrMwSt)}</td>
-                                </tr>
-                                <tr>
-                                    <td>Servicegebühr</td>
-                                    <td>${formatCurrency(serviceGebuehrJahr)}</td>
-                                    <td>${formatCurrency(gesamtServiceGebuehr)}</td>
-                                    <td>${formatCurrency(gesamtServiceGebuehr + gesamtServiceGebuehrMwSt)}</td>
-                                </tr>
-                                <tr class="font-bold bg-gray-100">
-                                    <td>Summe</td>
-                                    <td>${formatCurrency(perAnnumNetto)}</td>
-                                    <td>${formatCurrency(gesamtNetto)}</td>
-                                    <td>${formatCurrency(gesamtBrutto)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+const trancheHTML = `
+    <div class="results">
+        <h2>Tranche ${index + 1} - Laufzeit: ${laufzeitMonate} Monate (${laufzeitJahre.toFixed(1)} Jahre)</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Komponente</th>
+                    <th>% p.a.</th>
+                    <th>Per Annum</th>
+                    <th>Gesamt (Netto)</th>
+                    <th>Gesamt (Brutto)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="font-medium">Gesamtfinanzierung</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>${formatCurrency(gesamtFinanzierung)}</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>All-in Mezzanine Zins</td>
+                    <td>${allInMezzanineZins.toFixed(2)} %</td>
+                    <td>${formatCurrency(allInMezzanineZinsenJahr)}</td>
+                    <td>${formatCurrency(allInMezzanineZinsenJahr * laufzeitJahre)}</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>Crowd Zins</td>
+                    <td>${crowdZins.toFixed(2)} %</td>
+                    <td>${formatCurrency(crowdZinsenJahr)}</td>
+                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
+                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
+                </tr>
+                <tr>
+                    <td>Vermittlungsgebühr</td>
+                    <td>${vermittlungsGebuehr.toFixed(2)} %</td>
+                    <td>${formatCurrency(vermittlungsGebuehrBetrag / laufzeitJahre)}</td>
+                    <td>${formatCurrency(gesamtVermittlungsGebuehr)}</td>
+                    <td>${formatCurrency(gesamtVermittlungsGebuehr + gesamtVermittlungsGebuehrMwSt)}</td>
+                </tr>
+                <tr>
+                    <td>Strukturierungsgebühr</td>
+                    <td>${(strukturierungsGebuehrBetrag / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                    <td>${formatCurrency(strukturierungsGebuehrBetrag / laufzeitJahre)}</td>
+                    <td>${formatCurrency(gesamtStrukturierungsGebuehr)}</td>
+                    <td>${formatCurrency(gesamtStrukturierungsGebuehr + gesamtStrukturierungsGebuehrMwSt)}</td>
+                </tr>
+                <tr>
+                    <td>Servicegebühr</td>
+                    <td>${(serviceGebuehrJahr / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                    <td>${formatCurrency(serviceGebuehrJahr)}</td>
+                    <td>${formatCurrency(gesamtServiceGebuehr)}</td>
+                    <td>${formatCurrency(gesamtServiceGebuehr + gesamtServiceGebuehrMwSt)}</td>
+                </tr>
+                <tr class="font-bold bg-gray-100">
+                    <td>Summe</td>
+                    <td>${(perAnnumNetto / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                    <td>${formatCurrency(perAnnumNetto)}</td>
+                    <td>${formatCurrency(gesamtNetto)}</td>
+                    <td>${formatCurrency(gesamtBrutto)}</td>
+                </tr>
+            </tbody>
+        </table>
                         
                         <h3 class="mt-4 mb-2">Zahlplan</h3>
                         <table>
