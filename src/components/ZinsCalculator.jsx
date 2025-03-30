@@ -1,16 +1,16 @@
-// ZinsCalculator.jsx - Teil 1
+// src/components/ZinsCalculator.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   CardContent, 
   CardHeader, 
   CardTitle 
-} from '@/components/ui/card';
+} from './ui/card';
 import _ from 'lodash';
 
 // Utility-Funktionen
-import { formatCurrency, formatPercent, formatNumber, formatQuartal } from './utils/formatters';
-import { calculateZinsplan } from './utils/calculations';
+import { formatCurrency, formatPercent, formatNumber, formatQuartal } from '../utils/formatters';
+import { calculateZinsplan } from '../utils/calculations';
 
 const ZinsCalculator = () => {
   // Haupt-State für alle Eingaben und Berechnungen
@@ -120,8 +120,6 @@ const ZinsCalculator = () => {
       };
     });
   };
-
-// ZinsCalculator.jsx - Teil 2 (Fortsetzung)
   
   // Render-Teil
   return (
@@ -309,8 +307,6 @@ const ZinsCalculator = () => {
           </CardContent>
         </Card>
       </div>
-
-// ZinsCalculator.jsx - Teil 3 (Fortsetzung)
       
       {/* Ergebnisse */}
       <h2 className="text-xl font-bold mb-4">Ergebnisse</h2>
@@ -385,8 +381,6 @@ const ZinsCalculator = () => {
                   </tbody>
                 </table>
               </div>
-
-  // ZinsCalculator.jsx - Teil 4 (Fortsetzung)
               
               {/* Zahlplan */}
               <h3 className="font-semibold mt-4 mb-2">Zahlplan</h3>
