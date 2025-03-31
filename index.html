@@ -229,6 +229,35 @@
     </div>
 
     <script>
+
+        // Nach Document Ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Markiere bereits vorhandene Tranchenfelder
+    setupTranchenInputs();
+});
+
+// Markiere Tranchenfelder als "modifiziert", wenn sie geändert werden
+function setupTranchenInputs() {
+    // Initiale Tranche einrichten
+    markTrancheInputs(0);
+}
+
+function markTrancheInputs(index) {
+    const allInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
+    const crowdInput = document.getElementById(`trancheCrowdZins${index}`);
+    
+    if (allInInput) {
+        allInInput.addEventListener('input', function() {
+            this.dataset.modified = 'true';
+        });
+    }
+    
+    if (crowdInput) {
+        crowdInput.addEventListener('input', function() {
+            this.dataset.modified = 'true';
+        });
+    }
+}
         // Event-Listener für die Hauptzinssätze
 document.getElementById('allInMezzanineZins').addEventListener('change', updateTranchesZins);
 document.getElementById('crowdZins').addEventListener('change', updateTranchesZins);
@@ -245,7 +274,7 @@ function updateTranchesZins() {
         document.getElementById(`trancheCrowdZins${index}`).value = crowdZins;
     });
 }
-        // Tranche hinzufügen
+// Tranche hinzufügen
 function addTranche() {
     const tranchenContainer = document.getElementById('tranchenContainer');
     const tranchenCount = tranchenContainer.querySelectorAll('.tranche').length;
@@ -290,6 +319,9 @@ function addTranche() {
     
     // HTML an Container anhängen
     tranchenContainer.insertAdjacentHTML('beforeend', neueTrancheHTML);
+    
+    // Neue Trancheninputs markieren
+    markTrancheInputs(trancheIndex);
     
     // Button deaktivieren wenn maximal erreicht
     if (tranchenCount + 1 >= 3) {
@@ -346,6 +378,8 @@ function addTranche() {
         }
         
         function calculateResults() {
+    const allInMezzanineZinsGesamt = parseFloat(document.getElementById('allInMezzanineZins').value) || 5.0;
+    const crowdZinsGesamt = parseFloat(document.getElementById('crowdZins').value) || 7.0;
     const vermittlungsGebuehr = parseFloat(document.getElementById('vermittlungsGebuehr').value) || 3.0;
     const strukturierungsGebuehr = parseFloat(document.getElementById('strukturierungsGebuehr').value) || 10000;
     const vermittlungEndfaellig = document.getElementById('vermittlungEndfaellig').checked;
@@ -363,55 +397,41 @@ function addTranche() {
     // Ergebnisse zurücksetzen
     document.getElementById('trancheResults').innerHTML = '';
     
-    // Gebühren für erste Tranche berechnen
-    let ersteTrancheVermittlung = 0;
-    let ersteTrancheStrukturierung = 0;
-    
-    if (tranchenElemente.length > 0) {
-        const ersteTrancheFinanzierung = parseFloat(document.getElementById('trancheFinanzierung0').value) || 1000000;
-        ersteTrancheVermittlung = (vermittlungsGebuehr / 100) * ersteTrancheFinanzierung;
-        ersteTrancheStrukturierung = strukturierungsGebuehr;
-    }
-    
     // Jede Tranche berechnen
     tranchenElemente.forEach((trancheElement, index) => {
         const laufzeitMonate = parseInt(document.getElementById(`laufzeit${index}`).value) || 24;
         const laufzeitJahre = laufzeitMonate / 12;
         const gesamtFinanzierung = parseFloat(document.getElementById(`trancheFinanzierung${index}`).value) || 1000000;
-        const allInMezzanineZins = parseFloat(document.getElementById(`trancheAllInMezzanineZins${index}`).value) || 5.0;
-        const crowdZins = parseFloat(document.getElementById(`trancheCrowdZins${index}`).value) || 7.0;
         
-        // Gebühren - nur für erste Tranche, wenn nicht endfällig
-        let vermittlungsGebuehrBetrag = 0;
-        let strukturierungsGebuehrBetrag = 0;
+        // Übernehme Zinssätze aus der Gesamtfinanzierung, wenn Tranche unverändert
+        let trancheAllInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
+        let trancheCrowdInput = document.getElementById(`trancheCrowdZins${index}`);
         
-        if (index === 0 || vermittlungEndfaellig) {
-            vermittlungsGebuehrBetrag = ersteTrancheVermittlung;
+        // Wenn das Element nicht manuell geändert wurde, übernehme den Wert aus der Gesamtfinanzierung
+        if (!trancheAllInInput.dataset.modified) {
+            trancheAllInInput.value = allInMezzanineZinsGesamt;
         }
         
-        if (index === 0 || strukturierungEndfaellig) {
-            strukturierungsGebuehrBetrag = ersteTrancheStrukturierung;
+        if (!trancheCrowdInput.dataset.modified) {
+            trancheCrowdInput.value = crowdZinsGesamt;
         }
+        
+        const allInMezzanineZins = parseFloat(trancheAllInInput.value) || 5.0;
+        const crowdZins = parseFloat(trancheCrowdInput.value) || 7.0;
+        
+        // Gebühren für diese Tranche berechnen
+        const vermittlungsGebuehrBetrag = (vermittlungsGebuehr / 100) * gesamtFinanzierung;
+        const strukturierungsGebuehrBetrag = strukturierungsGebuehr;
         
         // Zinsen pro Jahr berechnen
         const crowdZinsenJahr = (crowdZins / 100) * gesamtFinanzierung;
         const allInMezzanineZinsenJahr = (allInMezzanineZins / 100) * gesamtFinanzierung;
         
         // Servicegebühr berechnen (verbleibender Betrag)
-        // Nur bei der ersten Tranche die Gebühren berücksichtigen oder wenn endfällig
-        let einmaligeGebuehrenProJahr = 0;
-        if (index === 0 || vermittlungEndfaellig || strukturierungEndfaellig) {
-            einmaligeGebuehrenProJahr = (vermittlungsGebuehrBetrag + strukturierungsGebuehrBetrag) / laufzeitJahre;
-        }
+        const einmaligeGebuehrenProJahr = (vermittlungsGebuehrBetrag + strukturierungsGebuehrBetrag) / laufzeitJahre;
         const serviceGebuehrJahr = allInMezzanineZinsenJahr - crowdZinsenJahr - einmaligeGebuehrenProJahr;
         
-        // Prüfen, ob Servicegebühr positiv ist
-        if (serviceGebuehrJahr < 0) {
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('errorMessage').textContent += `Achtung: Die Servicegebühr für Tranche ${index + 1} ist negativ. Bitte passen Sie die Gebühren oder den All-in-Mezzanine-Zins an. `;
-            errorOccurred = true;
-            return;
-        }
+        // Rest der Funktion bleibt unverändert...
                         
                 // Zahlplan berechnen
                 const zahlplan = [];
