@@ -134,8 +134,13 @@
             </div>
             
             <div class="form-group">
+                <label for="gesamtLaufzeit">Gesamtlaufzeit (Monate)</label>
+                <input type="number" id="gesamtLaufzeit" value="24" min="1">
+            </div>
+            
+            <div class="form-group">
                 <label for="allInMezzanineZins">All-in Mezzanine Zins (%)</label>
-                <input type="number" id="allInMezzanineZins" value="5.0" step="0.1">
+                <input type="number" id="allInMezzanineZins" value="15.0" step="0.1">
             </div>
             
             <div class="form-group">
@@ -145,12 +150,12 @@
             
             <div class="form-group">
                 <label for="vermittlungsGebuehr">Vermittlungsgebühr (%)</label>
-                <input type="number" id="vermittlungsGebuehr" value="3.0" step="0.1">
+                <input type="number" id="vermittlungsGebuehr" value="5.5" step="0.1">
             </div>
             
             <div class="form-group">
                 <label for="strukturierungsGebuehr">Strukturierungsgebühr (€)</label>
-                <input type="number" id="strukturierungsGebuehr" value="10000">
+                <input type="number" id="strukturierungsGebuehr" value="95000">
             </div>
             
             <div class="checkbox-group">
@@ -180,7 +185,7 @@
                 
                 <div class="form-group">
                     <label for="trancheAllInMezzanineZins0">All-in Mezzanine Zins (%)</label>
-                    <input type="number" id="trancheAllInMezzanineZins0" class="trancheAllInMezzanineZins" value="5.0" step="0.1">
+                    <input type="number" id="trancheAllInMezzanineZins0" class="trancheAllInMezzanineZins" value="15.0" step="0.1">
                 </div>
                 
                 <div class="form-group">
@@ -228,106 +233,128 @@
         </div>
     </div>
 
-    <script>
-
+<script>
         // Nach Document Ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Markiere bereits vorhandene Tranchenfelder
-    setupTranchenInputs();
-});
-
-// Markiere Tranchenfelder als "modifiziert", wenn sie geändert werden
-function setupTranchenInputs() {
-    // Initiale Tranche einrichten
-    markTrancheInputs(0);
-}
-
-function markTrancheInputs(index) {
-    const allInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
-    const crowdInput = document.getElementById(`trancheCrowdZins${index}`);
-    
-    if (allInInput) {
-        allInInput.addEventListener('input', function() {
-            this.dataset.modified = 'true';
+        document.addEventListener('DOMContentLoaded', function() {
+            // Markiere bereits vorhandene Tranchenfelder
+            setupTranchenInputs();
+            // Synchronisiere Tranche 1 mit Gesamtfinanzierung
+            updateTrancheOne();
         });
-    }
-    
-    if (crowdInput) {
-        crowdInput.addEventListener('input', function() {
-            this.dataset.modified = 'true';
-        });
-    }
-}
-        // Event-Listener für die Hauptzinssätze
-document.getElementById('allInMezzanineZins').addEventListener('change', updateTranchesZins);
-document.getElementById('crowdZins').addEventListener('change', updateTranchesZins);
 
-// Hauptzinssätze in Tranchen übernehmen
-function updateTranchesZins() {
-    const allInMezzanineZins = parseFloat(document.getElementById('allInMezzanineZins').value) || 5.0;
-    const crowdZins = parseFloat(document.getElementById('crowdZins').value) || 7.0;
-    
-    // Für jede Tranche die Zinssätze aktualisieren
-    const tranchen = document.querySelectorAll('.tranche');
-    tranchen.forEach((tranche, index) => {
-        document.getElementById(`trancheAllInMezzanineZins${index}`).value = allInMezzanineZins;
-        document.getElementById(`trancheCrowdZins${index}`).value = crowdZins;
-    });
-}
-// Tranche hinzufügen
-function addTranche() {
-    const tranchenContainer = document.getElementById('tranchenContainer');
-    const tranchenCount = tranchenContainer.querySelectorAll('.tranche').length;
-    
-    if (tranchenCount >= 3) {
-        alert('Maximal 3 Tranchen möglich');
-        return;
-    }
-    
-    const trancheIndex = tranchenCount;
-    const allInMezzanineZins = parseFloat(document.getElementById('allInMezzanineZins').value) || 5.0;
-    const crowdZins = parseFloat(document.getElementById('crowdZins').value) || 7.0;
-    
-    const neueTrancheHTML = `
-        <div class="calculator tranche" data-index="${trancheIndex}">
-            <div class="tranche-header">
-                <h2>Tranche ${trancheIndex + 1}</h2>
-                <button class="btn-danger" onclick="removeTranche(${trancheIndex})">Entfernen</button>
-            </div>
+        // Event-Listener für Gesamtfinanzierung
+        document.getElementById('gesamtFinanzierung').addEventListener('change', updateTrancheOne);
+        document.getElementById('allInMezzanineZins').addEventListener('change', updateTrancheOne);
+        document.getElementById('crowdZins').addEventListener('change', updateTrancheOne);
+        document.getElementById('gesamtLaufzeit').addEventListener('change', updateTrancheOne);
+
+        // Tranche 1 mit Gesamtfinanzierung synchronisieren
+        function updateTrancheOne() {
+            const gesamtFinanzierung = parseFloat(document.getElementById('gesamtFinanzierung').value) || 1000000;
+            const allInMezzanineZins = parseFloat(document.getElementById('allInMezzanineZins').value) || 15.0;
+            const crowdZins = parseFloat(document.getElementById('crowdZins').value) || 7.0;
+            const gesamtLaufzeit = parseInt(document.getElementById('gesamtLaufzeit').value) || 24;
             
-            <div class="form-group">
-                <label for="laufzeit${trancheIndex}">Laufzeit (Monate)</label>
-                <input type="number" id="laufzeit${trancheIndex}" class="laufzeit" value="24" min="1">
-            </div>
+            // Erste Tranche aktualisieren
+            document.getElementById('trancheFinanzierung0').value = gesamtFinanzierung;
+            document.getElementById('trancheAllInMezzanineZins0').value = allInMezzanineZins;
+            document.getElementById('trancheCrowdZins0').value = crowdZins;
+            document.getElementById('laufzeit0').value = gesamtLaufzeit;
+        }
+
+        // Markiere Tranchenfelder als "modifiziert", wenn sie geändert werden
+        function setupTranchenInputs() {
+            // Initiale Tranche einrichten
+            markTrancheInputs(0);
+        }
+
+        function markTrancheInputs(index) {
+            const allInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
+            const crowdInput = document.getElementById(`trancheCrowdZins${index}`);
+            const laufzeitInput = document.getElementById(`laufzeit${index}`);
+            const finanzierungInput = document.getElementById(`trancheFinanzierung${index}`);
             
-            <div class="form-group">
-                <label for="trancheFinanzierung${trancheIndex}">Finanzierungssumme (€)</label>
-                <input type="number" id="trancheFinanzierung${trancheIndex}" class="trancheFinanzierung" value="1000000">
-            </div>
+            if (allInInput) {
+                allInInput.addEventListener('input', function() {
+                    this.dataset.modified = 'true';
+                });
+            }
             
-            <div class="form-group">
-                <label for="trancheAllInMezzanineZins${trancheIndex}">All-in Mezzanine Zins (%)</label>
-                <input type="number" id="trancheAllInMezzanineZins${trancheIndex}" class="trancheAllInMezzanineZins" value="${allInMezzanineZins}" step="0.1">
-            </div>
+            if (crowdInput) {
+                crowdInput.addEventListener('input', function() {
+                    this.dataset.modified = 'true';
+                });
+            }
             
-            <div class="form-group">
-                <label for="trancheCrowdZins${trancheIndex}">Crowd Zins (%)</label>
-                <input type="number" id="trancheCrowdZins${trancheIndex}" class="trancheCrowdZins" value="${crowdZins}" step="0.1">
-            </div>
-        </div>
-    `;
-    
-    // HTML an Container anhängen
-    tranchenContainer.insertAdjacentHTML('beforeend', neueTrancheHTML);
-    
-    // Neue Trancheninputs markieren
-    markTrancheInputs(trancheIndex);
-    
-    // Button deaktivieren wenn maximal erreicht
-    if (tranchenCount + 1 >= 3) {
-        document.getElementById('addTrancheBtn').disabled = true;
-    }
-}
+            if (laufzeitInput) {
+                laufzeitInput.addEventListener('input', function() {
+                    this.dataset.modified = 'true';
+                });
+            }
+            
+            if (finanzierungInput) {
+                finanzierungInput.addEventListener('input', function() {
+                    this.dataset.modified = 'true';
+                });
+            }
+        }
+        
+        // Tranche hinzufügen
+        function addTranche() {
+            const tranchenContainer = document.getElementById('tranchenContainer');
+            const tranchenCount = tranchenContainer.querySelectorAll('.tranche').length;
+            
+            if (tranchenCount >= 3) {
+                alert('Maximal 3 Tranchen möglich');
+                return;
+            }
+            
+            const trancheIndex = tranchenCount;
+            const allInMezzanineZins = parseFloat(document.getElementById('allInMezzanineZins').value) || 15.0;
+            const crowdZins = parseFloat(document.getElementById('crowdZins').value) || 7.0;
+            const gesamtLaufzeit = parseInt(document.getElementById('gesamtLaufzeit').value) || 24;
+            
+            const neueTrancheHTML = `
+                <div class="calculator tranche" data-index="${trancheIndex}">
+                    <div class="tranche-header">
+                        <h2>Tranche ${trancheIndex + 1}</h2>
+                        <button class="btn-danger" onclick="removeTranche(${trancheIndex})">Entfernen</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="laufzeit${trancheIndex}">Laufzeit (Monate)</label>
+                        <input type="number" id="laufzeit${trancheIndex}" class="laufzeit" value="${gesamtLaufzeit}" min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trancheFinanzierung${trancheIndex}">Finanzierungssumme (€)</label>
+                        <input type="number" id="trancheFinanzierung${trancheIndex}" class="trancheFinanzierung" value="1000000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trancheAllInMezzanineZins${trancheIndex}">All-in Mezzanine Zins (%)</label>
+                        <input type="number" id="trancheAllInMezzanineZins${trancheIndex}" class="trancheAllInMezzanineZins" value="${allInMezzanineZins}" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trancheCrowdZins${trancheIndex}">Crowd Zins (%)</label>
+                        <input type="number" id="trancheCrowdZins${trancheIndex}" class="trancheCrowdZins" value="${crowdZins}" step="0.1">
+                    </div>
+                </div>
+            `;
+            
+            // HTML an Container anhängen
+            tranchenContainer.insertAdjacentHTML('beforeend', neueTrancheHTML);
+            
+            // Neue Trancheninputs markieren
+            markTrancheInputs(trancheIndex);
+            
+            // Button deaktivieren wenn maximal erreicht
+            if (tranchenCount + 1 >= 3) {
+                document.getElementById('addTrancheBtn').disabled = true;
+            }
+        }
+        
         // Tranche entfernen
         function removeTranche(index) {
             const tranchen = document.querySelectorAll('.tranche');
@@ -376,63 +403,69 @@ function addTranche() {
             const quartal = Math.ceil((monat % 12) / 3);
             return `Jahr ${jahr}, Q${quartal}`;
         }
-        
-        function calculateResults() {
-    const allInMezzanineZinsGesamt = parseFloat(document.getElementById('allInMezzanineZins').value) || 5.0;
-    const crowdZinsGesamt = parseFloat(document.getElementById('crowdZins').value) || 7.0;
-    const vermittlungsGebuehr = parseFloat(document.getElementById('vermittlungsGebuehr').value) || 3.0;
-    const strukturierungsGebuehr = parseFloat(document.getElementById('strukturierungsGebuehr').value) || 10000;
-    const vermittlungEndfaellig = document.getElementById('vermittlungEndfaellig').checked;
-    const strukturierungEndfaellig = document.getElementById('strukturierungEndfaellig').checked;
-    
-    // Alle Tranchen ermitteln
-    const tranchenElemente = document.querySelectorAll('.tranche');
-    const tranchenErgebnisse = [];
-    let errorOccurred = false;
-    
-    // Fehlertext zurücksetzen
-    document.getElementById('errorMessage').style.display = 'none';
-    document.getElementById('errorMessage').textContent = '';
-    
-    // Ergebnisse zurücksetzen
-    document.getElementById('trancheResults').innerHTML = '';
-    
-    // Jede Tranche berechnen
-    tranchenElemente.forEach((trancheElement, index) => {
-        const laufzeitMonate = parseInt(document.getElementById(`laufzeit${index}`).value) || 24;
-        const laufzeitJahre = laufzeitMonate / 12;
-        const gesamtFinanzierung = parseFloat(document.getElementById(`trancheFinanzierung${index}`).value) || 1000000;
-        
-        // Übernehme Zinssätze aus der Gesamtfinanzierung, wenn Tranche unverändert
-        let trancheAllInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
-        let trancheCrowdInput = document.getElementById(`trancheCrowdZins${index}`);
-        
-        // Wenn das Element nicht manuell geändert wurde, übernehme den Wert aus der Gesamtfinanzierung
-        if (!trancheAllInInput.dataset.modified) {
-            trancheAllInInput.value = allInMezzanineZinsGesamt;
-        }
-        
-        if (!trancheCrowdInput.dataset.modified) {
-            trancheCrowdInput.value = crowdZinsGesamt;
-        }
-        
-        const allInMezzanineZins = parseFloat(trancheAllInInput.value) || 5.0;
-        const crowdZins = parseFloat(trancheCrowdInput.value) || 7.0;
-        
-        // Gebühren für diese Tranche berechnen
-        const vermittlungsGebuehrBetrag = (vermittlungsGebuehr / 100) * gesamtFinanzierung;
-        const strukturierungsGebuehrBetrag = strukturierungsGebuehr;
-        
-        // Zinsen pro Jahr berechnen
-        const crowdZinsenJahr = (crowdZins / 100) * gesamtFinanzierung;
-        const allInMezzanineZinsenJahr = (allInMezzanineZins / 100) * gesamtFinanzierung;
-        
-        // Servicegebühr berechnen (verbleibender Betrag)
-        const einmaligeGebuehrenProJahr = (vermittlungsGebuehrBetrag + strukturierungsGebuehrBetrag) / laufzeitJahre;
-        const serviceGebuehrJahr = allInMezzanineZinsenJahr - crowdZinsenJahr - einmaligeGebuehrenProJahr;
-        
-        // Rest der Funktion bleibt unverändert...
-                        
+
+function calculateResults() {
+            const allInMezzanineZinsGesamt = parseFloat(document.getElementById('allInMezzanineZins').value) || 15.0;
+            const crowdZinsGesamt = parseFloat(document.getElementById('crowdZins').value) || 7.0;
+            const vermittlungsGebuehr = parseFloat(document.getElementById('vermittlungsGebuehr').value) || 5.5;
+            const strukturierungsGebuehr = parseFloat(document.getElementById('strukturierungsGebuehr').value) || 95000;
+            const vermittlungEndfaellig = document.getElementById('vermittlungEndfaellig').checked;
+            const strukturierungEndfaellig = document.getElementById('strukturierungEndfaellig').checked;
+            
+            // Alle Tranchen ermitteln
+            const tranchenElemente = document.querySelectorAll('.tranche');
+            const tranchenErgebnisse = [];
+            let errorOccurred = false;
+            
+            // Fehlertext zurücksetzen
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('errorMessage').textContent = '';
+            
+            // Ergebnisse zurücksetzen
+            document.getElementById('trancheResults').innerHTML = '';
+            
+            // Jede Tranche berechnen
+            tranchenElemente.forEach((trancheElement, index) => {
+                const laufzeitMonate = parseInt(document.getElementById(`laufzeit${index}`).value) || 24;
+                const laufzeitJahre = laufzeitMonate / 12;
+                const gesamtFinanzierung = parseFloat(document.getElementById(`trancheFinanzierung${index}`).value) || 1000000;
+                
+                // Übernehme Zinssätze aus der Gesamtfinanzierung, wenn Tranche unverändert
+                let trancheAllInInput = document.getElementById(`trancheAllInMezzanineZins${index}`);
+                let trancheCrowdInput = document.getElementById(`trancheCrowdZins${index}`);
+                
+                // Wenn das Element nicht manuell geändert wurde, übernehme den Wert aus der Gesamtfinanzierung
+                if (!trancheAllInInput.dataset.modified) {
+                    trancheAllInInput.value = allInMezzanineZinsGesamt;
+                }
+                
+                if (!trancheCrowdInput.dataset.modified) {
+                    trancheCrowdInput.value = crowdZinsGesamt;
+                }
+                
+                const allInMezzanineZins = parseFloat(trancheAllInInput.value) || 15.0;
+                const crowdZins = parseFloat(trancheCrowdInput.value) || 7.0;
+                
+                // Gebühren für diese Tranche berechnen
+                const vermittlungsGebuehrBetrag = (vermittlungsGebuehr / 100) * gesamtFinanzierung;
+                const strukturierungsGebuehrBetrag = strukturierungsGebuehr;
+                
+                // Zinsen pro Jahr berechnen
+                const crowdZinsenJahr = (crowdZins / 100) * gesamtFinanzierung;
+                const allInMezzanineZinsenJahr = (allInMezzanineZins / 100) * gesamtFinanzierung;
+                
+                // Servicegebühr berechnen (verbleibender Betrag)
+                const einmaligeGebuehrenProJahr = (vermittlungsGebuehrBetrag + strukturierungsGebuehrBetrag) / laufzeitJahre;
+                const serviceGebuehrJahr = allInMezzanineZinsenJahr - crowdZinsenJahr - einmaligeGebuehrenProJahr;
+                
+                // Prüfen, ob Servicegebühr positiv ist
+                if (serviceGebuehrJahr < 0) {
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('errorMessage').textContent += `Achtung: Die Servicegebühr für Tranche ${index + 1} ist negativ. Bitte passen Sie die Gebühren oder den All-in-Mezzanine-Zins an. `;
+                    errorOccurred = true;
+                    return;
+                }
+                
                 // Zahlplan berechnen
                 const zahlplan = [];
                 
@@ -533,72 +566,72 @@ function addTranche() {
                 });
                 
                 // HTML für diese Tranche erstellen
-const trancheHTML = `
-    <div class="results">
-        <h2>Tranche ${index + 1} - Laufzeit: ${laufzeitMonate} Monate (${laufzeitJahre.toFixed(1)} Jahre)</h2>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Komponente</th>
-                    <th>% p.a.</th>
-                    <th>Per Annum</th>
-                    <th>Gesamt (Netto)</th>
-                    <th>Gesamt (Brutto)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="font-medium">Gesamtfinanzierung</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>${formatCurrency(gesamtFinanzierung)}</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>All-in Mezzanine Zins</td>
-                    <td>${allInMezzanineZins.toFixed(2)} %</td>
-                    <td>${formatCurrency(allInMezzanineZinsenJahr)}</td>
-                    <td>${formatCurrency(allInMezzanineZinsenJahr * laufzeitJahre)}</td>
-                    <td>-</td>
-                </tr>
-                <tr>
-                    <td>Crowd Zins</td>
-                    <td>${crowdZins.toFixed(2)} %</td>
-                    <td>${formatCurrency(crowdZinsenJahr)}</td>
-                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
-                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
-                </tr>
-                <tr>
-                    <td>Vermittlungsgebühr</td>
-                    <td>${vermittlungsGebuehr.toFixed(2)} %</td>
-                    <td>${formatCurrency(vermittlungsGebuehrBetrag / laufzeitJahre)}</td>
-                    <td>${formatCurrency(gesamtVermittlungsGebuehr)}</td>
-                    <td>${formatCurrency(gesamtVermittlungsGebuehr + gesamtVermittlungsGebuehrMwSt)}</td>
-                </tr>
-                <tr>
-                    <td>Strukturierungsgebühr</td>
-                    <td>${(strukturierungsGebuehrBetrag / gesamtFinanzierung * 100).toFixed(2)} %</td>
-                    <td>${formatCurrency(strukturierungsGebuehrBetrag / laufzeitJahre)}</td>
-                    <td>${formatCurrency(gesamtStrukturierungsGebuehr)}</td>
-                    <td>${formatCurrency(gesamtStrukturierungsGebuehr + gesamtStrukturierungsGebuehrMwSt)}</td>
-                </tr>
-                <tr>
-                    <td>Servicegebühr</td>
-                    <td>${(serviceGebuehrJahr / gesamtFinanzierung * 100).toFixed(2)} %</td>
-                    <td>${formatCurrency(serviceGebuehrJahr)}</td>
-                    <td>${formatCurrency(gesamtServiceGebuehr)}</td>
-                    <td>${formatCurrency(gesamtServiceGebuehr + gesamtServiceGebuehrMwSt)}</td>
-                </tr>
-                <tr class="font-bold bg-gray-100">
-                    <td>Summe</td>
-                    <td>${(perAnnumNetto / gesamtFinanzierung * 100).toFixed(2)} %</td>
-                    <td>${formatCurrency(perAnnumNetto)}</td>
-                    <td>${formatCurrency(gesamtNetto)}</td>
-                    <td>${formatCurrency(gesamtBrutto)}</td>
-                </tr>
-            </tbody>
-        </table>
+                const trancheHTML = `
+                    <div class="results">
+                        <h2>Tranche ${index + 1} - Laufzeit: ${laufzeitMonate} Monate (${laufzeitJahre.toFixed(1)} Jahre)</h2>
+                        
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Komponente</th>
+                                    <th>% p.a.</th>
+                                    <th>Per Annum</th>
+                                    <th>Gesamt (Netto)</th>
+                                    <th>Gesamt (Brutto)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-medium">Gesamtfinanzierung</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>${formatCurrency(gesamtFinanzierung)}</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>All-in Mezzanine Zins</td>
+                                    <td>${allInMezzanineZins.toFixed(2)} %</td>
+                                    <td>${formatCurrency(allInMezzanineZinsenJahr)}</td>
+                                    <td>${formatCurrency(allInMezzanineZinsenJahr * laufzeitJahre)}</td>
+                                    <td>-</td>
+                                </tr>
+                                <tr>
+                                    <td>Crowd Zins</td>
+                                    <td>${crowdZins.toFixed(2)} %</td>
+                                    <td>${formatCurrency(crowdZinsenJahr)}</td>
+                                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
+                                    <td>${formatCurrency(gesamtCrowdZinsen)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Vermittlungsgebühr</td>
+                                    <td>${vermittlungsGebuehr.toFixed(2)} %</td>
+                                    <td>${formatCurrency(vermittlungsGebuehrBetrag / laufzeitJahre)}</td>
+                                    <td>${formatCurrency(gesamtVermittlungsGebuehr)}</td>
+                                    <td>${formatCurrency(gesamtVermittlungsGebuehr + gesamtVermittlungsGebuehrMwSt)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Strukturierungsgebühr</td>
+                                    <td>${(strukturierungsGebuehrBetrag / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                                    <td>${formatCurrency(strukturierungsGebuehrBetrag / laufzeitJahre)}</td>
+                                    <td>${formatCurrency(gesamtStrukturierungsGebuehr)}</td>
+                                    <td>${formatCurrency(gesamtStrukturierungsGebuehr + gesamtStrukturierungsGebuehrMwSt)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Servicegebühr</td>
+                                    <td>${(serviceGebuehrJahr / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                                    <td>${formatCurrency(serviceGebuehrJahr)}</td>
+                                    <td>${formatCurrency(gesamtServiceGebuehr)}</td>
+                                    <td>${formatCurrency(gesamtServiceGebuehr + gesamtServiceGebuehrMwSt)}</td>
+                                </tr>
+                                <tr class="font-bold bg-gray-100">
+                                    <td>Summe</td>
+                                    <td>${(perAnnumNetto / gesamtFinanzierung * 100).toFixed(2)} %</td>
+                                    <td>${formatCurrency(perAnnumNetto)}</td>
+                                    <td>${formatCurrency(gesamtNetto)}</td>
+                                    <td>${formatCurrency(gesamtBrutto)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                         
                         <h3 class="mt-4 mb-2">Zahlplan</h3>
                         <table>
