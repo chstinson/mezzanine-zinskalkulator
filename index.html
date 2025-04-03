@@ -716,55 +716,119 @@
         } // Ende calculateResults
 
 
-        // --- Funktion zum Erstellen der Diagramme (unverändert) ---
+                // --- Funktion zum Erstellen der Diagramme ---
         function createCharts(tranchenErgebnisse, gesamtKostenNettoAlle, gesamtCrowdZinsenAlle, gesamtVermittlungAlle, gesamtStrukturierungAlle, gesamtServiceAlle) {
-            // (Diese Funktion bleibt unverändert, da sie die sortierten Zahlpläne verwendet)
-             // --- 1. Liniendiagramm: Kostenverteilung über Zeit (Netto) ---
-            const aggregatedPayments = {};
-            let maxZeitpunktChart = 0; // Eigene Variable für Chart-Achse
+
+            // --- 1. Liniendiagramm: Kostenverteilung über Zeit (Netto) ---
+
+            // *** NEUE Aggregation pro Quartal ***
+            const quarterlyAggregatedPayments = {}; // { "J1 Q1": totalNetCost, "J1 Q2": totalNetCost, ... }
+
             tranchenErgebnisse.forEach(tranche => {
                 tranche.zahlplan.forEach(zahlung => {
-                    const zeitpunkt = zahlung.zeitpunkt;
                     const nettoKosten = zahlung.vermittlungsGebuehr + zahlung.strukturierungsGebuehr + zahlung.crowdZins + zahlung.serviceGebuehr;
-                    if (nettoKosten > 0.001) { // Nur plotten, wenn Kosten > 0
-                        aggregatedPayments[zeitpunkt] = (aggregatedPayments[zeitpunkt] || 0) + nettoKosten;
-                        maxZeitpunktChart = Math.max(maxZeitpunktChart, zeitpunkt);
+                    if (nettoKosten > 0 || zahlung.zeitpunkt === 0) { // Auch Zeitpunkt 0 berücksichtigen, auch wenn Kosten 0 sind
+                        const quartalLabel = formatQuartal(zahlung.zeitpunkt);
+                        quarterlyAggregatedPayments[quartalLabel] = (quarterlyAggregatedPayments[quartalLabel] || 0) + nettoKosten;
                     }
                 });
             });
-            const distributionLabels = [];
-            const distributionData = [];
-            // Sortierte Zeitpunkte aus aggregatedPayments holen
-            const allZeitpunkte = Object.keys(aggregatedPayments).map(Number).sort((a, b) => a - b);
 
-            // Ersten Punkt explizit hinzufügen, falls Zahlungen erst später beginnen
-             let minZeitpunktChart = allZeitpunkte.length > 0 ? allZeitpunkte[0] : 0;
-             if (minZeitpunktChart > 0) {
-                 // Füge Startpunkt bei Monat 0 hinzu, wenn die erste Zahlung später ist
-                 distributionLabels.push(formatQuartal(0)); // Monat 0 = Projektstart
-                 distributionData.push(0);
-             }
+            // *** NEUE Sortierung der Quartals-Labels ***
+            const sortedQuartalLabels = Object.keys(quarterlyAggregatedPayments).sort((a, b) => {
+                if (a === "Start") return -1;
+                if (b === "Start") return 1;
 
+                // Extrahiere Jahr und Quartal
+                const matchA = a.match(/J(\d+)\sQ(\d+)/);
+                const matchB = b.match(/J(\d+)\sQ(\d+)/);
 
-            allZeitpunkte.forEach(zp => {
-                distributionLabels.push(formatQuartal(zp)); // Nutze die Standard-Quartalsformatierung
-                distributionData.push(aggregatedPayments[zp]);
+                if (!matchA || !matchB) return 0; // Fallback, sollte nicht passieren
+
+                const yearA = parseInt(matchA[1]);
+                const quarterA = parseInt(matchA[2]);
+                const yearB = parseInt(matchB[1]);
+                const quarterB = parseInt(matchB[2]);
+
+                if (yearA !== yearB) {
+                    return yearA - yearB;
+                } else {
+                    return quarterA - quarterB;
+                }
             });
 
+            // Labels und Daten für das Liniendiagramm vorbereiten (aus sortierten Quartalen)
+            const distributionLabels = sortedQuartalLabels;
+            const distributionData = sortedQuartalLabels.map(label => quarterlyAggregatedPayments[label]);
+            // *** ENDE NEUE Aggregation und Sortierung ***
+
+
+            // Chart erstellen (Rest wie vorher)
             const ctxDist = document.getElementById('costDistributionChart').getContext('2d');
+            // Alte Chart-Instanz zerstören, falls vorhanden
+            if (window.myDistributionChart) window.myDistributionChart.destroy();
+
             window.myDistributionChart = new Chart(ctxDist, {
-                 type: 'line', data: { labels: distributionLabels, datasets: [{ label: 'Netto-Gesamtkosten pro Zeitpunkt', data: distributionData, borderColor: 'rgb(54, 162, 235)', backgroundColor: 'rgba(54, 162, 235, 0.2)', tension: 0.1, fill: 'origin' }] }, options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true, ticks: { callback: function(value) { return formatCurrency(value); } } } }, plugins: { tooltip: { callbacks: { label: function(context) { return (context.dataset.label || '') + ': ' + formatCurrency(context.parsed.y); } } } } }
+                type: 'line',
+                data: {
+                    labels: distributionLabels, // Verwendet die sortierten, eindeutigen Quartalslabels
+                    datasets: [{
+                        label: 'Netto-Gesamtkosten pro Zeitpunkt',
+                        data: distributionData, // Verwendet die aggregierten Kosten pro Quartal
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.1,
+                        fill: true,
+                        pointRadius: 5, // Punkte etwas größer machen
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: function(value) { return formatCurrency(value); } }
+                        }
+                    },
+                     plugins: {
+                         tooltip: { callbacks: { label: function(context) { return (context.dataset.label || '') + ': ' + formatCurrency(context.parsed.y); } } }
+                    }
+                }
             });
+
 
              // --- 2. Kreisdiagramm: Aufteilung Gesamtkosten (Netto) ---
             const breakdownLabels = ['Crowd-Zinsen', 'Vermittlungsgebühr', 'Strukturierungsgebühr', 'Servicegebühr'];
             const breakdownData = [ gesamtCrowdZinsenAlle, gesamtVermittlungAlle, gesamtStrukturierungAlle, gesamtServiceAlle ];
-            const filteredLabels = []; const filteredData = [];
+            const filteredLabels = [];
+            const filteredData = [];
             breakdownData.forEach((value, index) => { if (value > 0.001) { filteredLabels.push(breakdownLabels[index]); filteredData.push(value); } });
 
+
             const ctxBreakdown = document.getElementById('costBreakdownChart').getContext('2d');
+             // Alte Chart-Instanz zerstören, falls vorhanden
+            if (window.myBreakdownChart) window.myBreakdownChart.destroy();
+
             window.myBreakdownChart = new Chart(ctxBreakdown, {
-                 type: 'doughnut', data: { labels: filteredLabels, datasets: [{ label: 'Netto-Gesamtkosten Aufteilung', data: filteredData, backgroundColor: [ 'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)' ], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { tooltip: { callbacks: { label: function(context) { let label = context.label || ''; let value = context.parsed || 0; let sum = context.dataset.data.reduce((a, b) => a + b, 0); let percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '0.0%'; return `${label}: ${formatCurrency(value)} (${percentage})`; } } }, legend: { position: 'top' } } }
+                type: 'doughnut',
+                data: {
+                    labels: filteredLabels,
+                    datasets: [{
+                        label: 'Netto-Gesamtkosten Aufteilung',
+                        data: filteredData,
+                        backgroundColor: [ 'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)', 'rgb(75, 192, 192)' ],
+                        hoverOffset: 4
+                    }]
+                },
+                 options: {
+                    responsive: true, maintainAspectRatio: true,
+                     plugins: {
+                        tooltip: { callbacks: { label: function(context) { let label = context.label || ''; let value = context.parsed || 0; let sum = context.dataset.data.reduce((a, b) => a + b, 0); let percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) + '%' : '0.0%'; return `${label}: ${formatCurrency(value)} (${percentage})`; } } },
+                        legend: { position: 'top' }
+                    }
+                }
             });
         } // Ende createCharts
 
